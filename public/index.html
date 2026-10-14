@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Lordi Daijagra | सरपंच चुनाव 2026</title>
+  
+  <!-- PWA Meta Tags & Icons -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="theme-color" content="#047857">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lordi Daijagra">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap');
+    
+    body {
+      font-family: 'Noto Sans Devanagari', 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      background-color: #f8fafc;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .safe-bottom {
+      padding-bottom: 6.5rem;
+    }
+  </style>
+</head>
+<body class="text-slate-900 safe-bottom">
+
+  <!-- ==================== TOP CLEAN HEADER ==================== -->
+  <header class="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
+    
+    <!-- Top Bar -->
+    <div class="max-w-2xl mx-auto px-4 py-2 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <img src="/favicon.png" alt="Lordi Milestone" class="w-10 h-10 rounded-xl object-cover shadow-sm border border-slate-300">
+        <div>
+          <h1 class="text-base font-extrabold text-slate-900 leading-tight">Lordi Daijagra</h1>
+          <p class="text-[11px] text-slate-500 font-semibold">सरपंच चुनाव 2026 • कुल 2,673 वोटर</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <button id="pwa-install-header-btn" onclick="installPWA()" class="px-2.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm transition" title="ऐप इंस्टॉल करें">
+          <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">ऐप इंस्टॉल</span>
+          <span class="sm:hidden">ऐप</span>
+        </button>
+        <button onclick="refreshData()" class="p-2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1" title="ताज़ा करें">
+          <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+        </button>
+        <button onclick="exportCurrentFilteredList()" class="p-2 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-lg text-xs font-semibold" title="Excel/CSV डाउनलोड">
+          <i data-lucide="download" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Ward Selector Strip -->
+    <div class="border-t border-slate-200 bg-white px-3 py-2 overflow-x-auto no-scrollbar flex items-center gap-2" id="ward-pills-bar">
+      <!-- Injected by JS -->
+    </div>
+
+    <!-- Active Ward Status Subheader -->
+    <div id="active-ward-indicator" class="bg-slate-50 border-t border-slate-100 px-4 py-1.5 flex items-center justify-between text-xs text-slate-600">
+      <div class="flex items-center gap-1.5 font-bold">
+        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-600"></i>
+        <span id="active-ward-text">सभी 9 वार्ड (कुल 2,673 मतदाता)</span>
+      </div>
+      <div id="active-ward-action" class="hidden">
+        <button onclick="selectWard('ALL')" class="text-emerald-700 hover:text-emerald-900 font-extrabold text-[11px] underline">
+          सभी वार्ड देखें
+        </button>
+      </div>
+    </div>
+
+  </header>
+
+  <!-- ==================== MAIN WORKSPACE ==================== -->
+  <main class="max-w-2xl mx-auto px-3.5 py-3 space-y-3">
+
+    <!-- 0. PWA INSTALL BANNER -->
+    <section id="pwa-install-banner" class="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white rounded-2xl p-3 border border-emerald-700 shadow-md flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <img src="/favicon.png" alt="Lordi Daijagra App" class="w-11 h-11 rounded-xl object-cover shadow border-2 border-emerald-400 flex-shrink-0">
+        <div>
+          <div class="flex items-center gap-1.5">
+            <h3 class="text-xs font-black text-white leading-tight tracking-wide">Lordi Daijagra ऐप</h3>
+            <span class="bg-emerald-500/30 text-emerald-300 text-[10px] font-bold px-1.5 py-0.5 rounded border border-emerald-400/40">PWA</span>
+          </div>
+          <p class="text-[11px] text-emerald-100 font-medium leading-tight mt-0.5">फोन में इंस्टॉल करें • 1-क्लिक में होमस्क्रीन से खोलें</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 flex-shrink-0">
+        <button onclick="installPWA()" class="bg-emerald-400 hover:bg-emerald-300 active:scale-95 text-slate-950 font-black text-xs px-3 py-1.5 rounded-xl shadow transition flex items-center gap-1">
+          <i data-lucide="download-cloud" class="w-3.5 h-3.5"></i>
+          <span>इंस्टॉल</span>
+        </button>
+        <button onclick="dismissInstallBanner()" class="text-emerald-300/80 hover:text-white p-1 rounded-lg" title="हटाएं">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- 1. LIVE ELECTION TARGET CARD (सरल जीत का गणित) -->
+    <section class="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-xs space-y-2.5">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div>
+          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">सरपंच जीत का लक्ष्य: 950 वोट</span>
+          <div class="text-base font-black text-slate-900 flex items-center gap-1 mt-0.5">
+            <span>पक्के वोट:</span>
+            <span class="text-emerald-700 text-xl font-black" id="meter-supporters">0</span>
+            <span class="text-xs font-bold text-slate-400">/ 950</span>
+          </div>
+        </div>
+        <div class="text-right">
+          <span class="text-xs font-black text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-300" id="meter-percent">
+            0% पूरा
+          </span>
+        </div>
+      </div>
+
+      <!-- 3 Key Numbers Row (Clear, Big, Simple) -->
+      <div class="grid grid-cols-3 gap-2 text-center text-xs">
+        <div onclick="filterByLeaningQuick('supporter')" id="pill-filter-supporter" class="bg-emerald-50 border border-emerald-200 rounded-xl p-2 cursor-pointer active:scale-95 transition">
+          <span class="text-[11px] font-bold text-emerald-800 block">🟢 हमारा पक्का</span>
+          <b class="text-base font-black text-emerald-700" id="stat-supporters">0</b>
+        </div>
+
+        <div onclick="filterByLeaningQuick('swing')" id="pill-filter-swing" class="bg-amber-50 border border-amber-200 rounded-xl p-2 cursor-pointer active:scale-95 transition">
+          <span class="text-[11px] font-bold text-amber-800 block">🟡 संशय (मिलना है)</span>
+          <b class="text-base font-black text-amber-700" id="stat-swing">0</b>
+        </div>
+
+        <div onclick="filterByLeaningQuick('opposition')" id="pill-filter-opposition" class="bg-rose-50 border border-rose-200 rounded-xl p-2 cursor-pointer active:scale-95 transition">
+          <span class="text-[11px] font-bold text-rose-800 block">🔴 विरोधी</span>
+          <b class="text-base font-black text-rose-700" id="stat-opposition">0</b>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. VOTERS & FAMILIES WORKSPACE SECTION -->
+    <div id="voters-workspace-section" class="space-y-3">
+      
+      <!-- Search & Filters Container -->
+      <section class="bg-white rounded-2xl p-3 border border-slate-200 shadow-xs space-y-2.5">
+        
+        <!-- Big Search Input -->
+        <div class="relative">
+          <input 
+            type="text" 
+            id="search-input" 
+            placeholder="नाम (English या हिंदी), मकान (129A), फोन खोजें..." 
+            oninput="handleSearchInput()" 
+            class="w-full pl-10 pr-9 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-emerald-600 focus:bg-white focus:outline-none transition"
+          >
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+          <button id="clear-search-btn" onclick="clearSearch()" class="hidden absolute right-3 top-3 text-slate-400 hover:text-slate-600 p-0.5">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- KEY VIP SUB-TABS (shown when on 'key' tab) -->
+        <div id="key-vip-subtabs" class="hidden grid grid-cols-4 gap-1.5 bg-slate-100 p-1 rounded-xl text-center text-xs font-bold">
+          <button onclick="setKeyFilter('big_families')" id="keytab-big_families" class="py-1.5 px-1 rounded-lg bg-white text-emerald-800 shadow-xs transition">
+            🏰 5+ परिवार
+          </button>
+          <button onclick="setKeyFilter('decision_makers')" id="keytab-decision_makers" class="py-1.5 px-1 rounded-lg text-slate-600 transition">
+            ⚡ निर्णायक
+          </button>
+          <button onclick="setKeyFilter('elders')" id="keytab-elders" class="py-1.5 px-1 rounded-lg text-slate-600 transition">
+            👴 बुजुर्ग 65+
+          </button>
+          <button onclick="setKeyFilter('outstation')" id="keytab-outstation" class="py-1.5 px-1 rounded-lg text-slate-600 transition">
+            ✈️ प्रवासी
+          </button>
+        </div>
+
+        <!-- Secondary Filters (Dhani, Caste, Count) -->
+        <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-100 gap-2">
+          
+          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-1">
+            <select id="filter-mohalla" onchange="applyFilters()" class="py-1.5 px-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:outline-none focus:ring-1 focus:ring-emerald-500">
+              <option value="">सभी ढाणियां</option>
+              <option value="देजगरा मुख्य बस्ती">देजगरा मुख्य बस्ती</option>
+              <option value="जाखड़ो की ढाणी">जाखड़ो की ढाणी</option>
+              <option value="मेघवालों का बास">मेघवालों का बास</option>
+              <option value="विश्नोईयों की ढाणी">विश्नोईयों की ढाणी</option>
+              <option value="कुम्हारों का बास">कुम्हारों का बास</option>
+              <option value="पुरखपुरा ढाणी">पुरखपुरा ढाणी</option>
+              <option value="बेरा / खेत">बेरा / खेत</option>
+            </select>
+
+            <select id="filter-caste" onchange="applyFilters()" class="py-1.5 px-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:outline-none focus:ring-1 focus:ring-emerald-500">
+              <option value="">सभी जातियां</option>
+              <option value="मेघवाल">मेघवाल</option>
+              <option value="जाट">जाट</option>
+              <option value="विश्नोई">विश्नोई</option>
+              <option value="राजपूत">राजपूत</option>
+              <option value="कुम्हार">कुम्हार</option>
+              <option value="सैन">सैन (नाई)</option>
+              <option value="देवासी">देवासी</option>
+              <option value="सुथार">सुथार</option>
+              <option value="मुस्लिम">मुस्लिम</option>
+              <option value="ब्राह्मण">ब्राह्मण</option>
+            </select>
+
+            <button id="btn-toggle-elderly" onclick="toggleElderlyFilter()" class="hidden px-2.5 py-1 rounded-xl border border-purple-200 bg-purple-50 text-purple-900 font-bold whitespace-nowrap">
+              👴 बुजुर्ग 65+
+            </button>
+          </div>
+
+          <div class="text-[11px] text-slate-500 font-bold whitespace-nowrap">
+            दिख रहे: <b id="showing-count" class="text-slate-900 font-black">0</b>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- DATA LIST CONTAINER (CARDS / FAMILIES) -->
+      <div id="voters-container" class="space-y-3">
+        <div class="py-16 text-center">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-600 border-t-transparent mb-2"></div>
+          <p class="text-xs font-bold text-slate-600">डेटा लोड हो रहा है...</p>
+        </div>
+      </div>
+
+      <!-- PAGINATION -->
+      <div id="pagination-bar" class="flex items-center justify-between bg-white rounded-xl shadow-xs border border-slate-200 p-2.5 text-xs hidden">
+        <span class="text-slate-500 font-medium">
+          पेज <b id="current-page-num" class="text-slate-900">1</b> / <span id="total-pages-num">1</span>
+        </span>
+        <div class="flex items-center gap-1.5">
+          <button id="prev-page-btn" onclick="changePage(-1)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg font-bold text-slate-700 disabled:opacity-40">
+            पिछला
+          </button>
+          <button id="next-page-btn" onclick="changePage(1)" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-bold disabled:opacity-40">
+            अगला
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 3. ANALYTICS WORKSPACE SECTION (shown when Analytics tab is active) -->
+    <div id="analytics-workspace-section" class="space-y-3 hidden">
+      <!-- Injected by JS: renderAnalyticsView() -->
+    </div>
+
+  </main>
+
+  <!-- ==================== SIMPLE FAMILY EDIT MODAL ==================== -->
+  <div id="family-edit-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden my-auto animate-in zoom-in-95 duration-150">
+      
+      <!-- Modal Header -->
+      <div class="bg-slate-900 text-white px-4 py-3 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-extrabold flex items-center gap-1.5">
+            <span>👨‍👩‍👧‍👦</span>
+            <span>परिवार की जानकारी बदलें</span>
+          </h3>
+          <p id="family-modal-subtitle" class="text-[11px] text-slate-300">पूरे परिवार पर एक साथ लागू होगा</p>
+        </div>
+        <button onclick="closeFamilyEditModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-4 overflow-y-auto space-y-3.5 text-xs">
+        
+        <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+          <div class="font-extrabold text-emerald-950 text-sm" id="family-modal-head-name">परिवार: श्री -</div>
+          <div class="text-xs text-emerald-800 font-semibold mt-0.5" id="family-modal-count-info">कुल - वोट</div>
+        </div>
+
+        <form id="family-bulk-form" onsubmit="saveFamilyBulkData(event)" class="space-y-3">
+          <input type="hidden" id="bulk-family-id">
+
+          <!-- Makan Number (with 129A, 129B support) -->
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">मकान नंबर / परिवार सब-डिवीजन (उदा. 129A या 129B)</label>
+            <input type="text" id="bulk-house-no" placeholder="मकान नं (उदा. 129A)" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold font-mono focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <span class="text-[10px] text-slate-500 mt-0.5 block">एक ही मकान के 2 परिवारों को अलग करने के लिए 129A, 129B लिखें।</span>
+          </div>
+
+          <!-- Mohalla / Dhani -->
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">मोहल्ला / ढाणी</label>
+            <input list="mohalla-options" id="bulk-mohalla" placeholder="ढाणी का नाम चुनें या लिखें..." class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <datalist id="mohalla-options">
+              <option value="देजगरा मुख्य बस्ती">
+              <option value="जाखड़ो की ढाणी">
+              <option value="मेघवालों का बास">
+              <option value="विश्नोईयों की ढाणी">
+              <option value="कुम्हारों का बास">
+              <option value="पुरखपुरा ढाणी">
+              <option value="बेरा / खेत">
+              <option value="राजपूतों का वास">
+            </datalist>
+          </div>
+
+          <!-- Caste -->
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">जाति / समाज</label>
+            <select id="bulk-caste" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+              <option value="">जाति चुनें...</option>
+              <option value="मेघवाल">मेघवाल</option>
+              <option value="जाट">जाट</option>
+              <option value="विश्नोई">विश्नोई</option>
+              <option value="राजपूत">राजपूत</option>
+              <option value="कुम्हार">कुम्हार (प्रजापत)</option>
+              <option value="सैन">सैन (नाई)</option>
+              <option value="देवासी">देवासी (रैबारी)</option>
+              <option value="सुथार">सुथार</option>
+              <option value="मुस्लिम">मुस्लिम</option>
+              <option value="ब्राह्मण">ब्राह्मण</option>
+              <option value="अन्य">अन्य</option>
+            </select>
+          </div>
+
+          <!-- Candidate & Leaning Selection -->
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+            <label class="block font-bold text-slate-800 text-xs">परिवार का वोट किस तरफ है? (Election Leaning)</label>
+            <select id="bulk-candidate" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-extrabold text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+              <option value="हमारा प्रत्याशी">🟢 हमारा पक्का वोट (Our Supporter)</option>
+              <option value="अनिर्णीत / स्विंग">🟡 संशय / बात करनी है (Swing)</option>
+              <option value="प्रतिद्वंदी 1">🔴 विरोधी (Opposition)</option>
+            </select>
+          </div>
+
+          <!-- Notes / Planning Remark -->
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">परिवार की टिप्पणी / योजना (Notes)</label>
+            <input type="text" id="bulk-issue" placeholder="उदा. दादाजी से मिलना है, पानी की समस्या है..." class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
+
+          <div class="pt-2 flex items-center justify-end gap-2">
+            <button type="button" onclick="closeFamilyEditModal()" class="px-4 py-2 border border-slate-300 rounded-xl font-bold text-slate-600 text-xs">
+              रद्द करें
+            </button>
+            <button type="submit" id="save-family-btn" class="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 touch-btn">
+              <i data-lucide="check" class="w-4 h-4"></i>
+              <span>सुरक्षित करें</span>
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== SIMPLE INDIVIDUAL VOTER EDIT MODAL ==================== -->
+  <div id="edit-voter-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden my-auto animate-in zoom-in-95 duration-150">
+      
+      <div class="bg-slate-900 text-white px-4 py-3 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-extrabold">मतदाता जानकारी अपडेट</h3>
+          <p id="modal-voter-subtitle" class="text-[11px] text-slate-300">वार्ड • क्रम संख्या</p>
+        </div>
+        <button onclick="closeEditModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-4 overflow-y-auto space-y-3.5 text-xs">
+        
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between">
+          <div>
+            <div id="modal-display-name" class="text-base font-extrabold text-slate-900">नाम</div>
+            <div id="modal-display-relation" class="text-xs text-slate-600">पिता/पति</div>
+          </div>
+          <div class="text-right">
+            <span id="modal-display-epic" class="font-mono text-xs font-bold bg-white px-2 py-0.5 rounded border border-slate-300">EPIC</span>
+            <div id="modal-display-ward" class="text-[11px] font-semibold text-slate-700 mt-1">वार्ड • मकान</div>
+          </div>
+        </div>
+
+        <form id="voter-edit-form" onsubmit="saveVoterProfile(event)" class="space-y-3">
+          <input type="hidden" id="edit-voter-id">
+
+          <!-- Phone Number -->
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">मोबाइल नंबर (10 अंक)</label>
+            <input type="tel" id="edit-mobile" maxlength="10" placeholder="फोन नंबर लिखें" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold font-mono focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
+
+          <!-- Makan Number (supports 129A) -->
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">मकान नंबर / सब-डिवीजन (उदा. 129A)</label>
+            <input type="text" id="edit-house-no" placeholder="मकान नं (उदा. 129A)" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold font-mono focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
+
+          <!-- Key Decision Maker Tag -->
+          <div class="bg-yellow-50 border border-yellow-200 p-2.5 rounded-xl">
+            <label class="inline-flex items-center gap-2 cursor-pointer font-bold text-yellow-950 text-xs">
+              <input type="checkbox" id="edit-key-decision-maker" class="w-4 h-4 text-amber-600 rounded">
+              <span>⚡ क्या यह परिवार के मुख्य निर्णायक सदस्य हैं?</span>
+            </label>
+          </div>
+
+          <!-- Vote Preference -->
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">वोट किसे जाएगा?</label>
+            <select id="edit-candidate-preference" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-extrabold text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+              <option value="हमारा प्रत्याशी">🟢 हमारा पक्का वोट</option>
+              <option value="अनिर्णीत / स्विंग">🟡 संशय / बात करनी है</option>
+              <option value="प्रतिद्वंदी 1">🔴 विरोधी</option>
+            </select>
+          </div>
+
+          <!-- Dhani & Caste -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">मोहल्ला / ढाणी</label>
+              <input list="mohalla-options" id="edit-mohalla" placeholder="ढाणी..." class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">जाति / समाज</label>
+              <select id="edit-caste" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                <option value="">जाति चुनें...</option>
+                <option value="मेघवाल">मेघवाल</option>
+                <option value="जाट">जाट</option>
+                <option value="विश्नोई">विश्नोई</option>
+                <option value="राजपूत">राजपूत</option>
+                <option value="कुम्हार">कुम्हार</option>
+                <option value="सैन">सैन (नाई)</option>
+                <option value="देवासी">देवासी</option>
+                <option value="सुथार">सुथार</option>
+                <option value="मुस्लिम">मुस्लिम</option>
+                <option value="ब्राह्मण">ब्राह्मण</option>
+                <option value="अन्य">अन्य</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Outstation / Pravasi -->
+          <div class="pt-1">
+            <label class="inline-flex items-center gap-2 cursor-pointer font-bold text-slate-700">
+              <input type="checkbox" id="edit-is-outstation" class="w-4 h-4 text-blue-600 rounded">
+              <span>क्या यह गाँव से बाहर (प्रवासी) रहते हैं?</span>
+            </label>
+          </div>
+
+          <!-- Notes -->
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">टिप्पणी / योजना</label>
+            <input type="text" id="edit-notes" placeholder="उदा. इनसे संपर्क करना है..." class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
+
+          <div class="pt-2 flex items-center justify-end gap-2">
+            <button type="button" onclick="closeEditModal()" class="px-4 py-2 border border-slate-300 rounded-xl font-bold text-slate-600 text-xs">
+              रद्द करें
+            </button>
+            <button type="submit" id="save-voter-btn" class="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 touch-btn">
+              <i data-lucide="check" class="w-4 h-4"></i>
+              <span>सुरक्षित करें</span>
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== WHATSAPP VOTER SLIP MODAL ==================== -->
+  <div id="voter-slip-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-150">
+      
+      <div class="bg-emerald-800 text-white p-3.5 text-center">
+        <h3 class="text-sm font-bold">मतदान पर्ची (Voter Slip)</h3>
+        <p class="text-[11px] text-emerald-200">ग्राम पंचायत लोरड़ी देजगरा (2026)</p>
+      </div>
+
+      <div class="p-4" id="printable-slip">
+        <div class="border-2 border-dashed border-emerald-300 rounded-xl p-3.5 bg-emerald-50/50 text-center space-y-2">
+          
+          <div class="text-lg font-black text-slate-900" id="slip-name">मतदाता नाम</div>
+          <div class="text-xs text-slate-600 font-medium" id="slip-relation">पिता / पति: -</div>
+
+          <div class="grid grid-cols-2 gap-2 text-left bg-white p-2 rounded-lg border border-emerald-200 text-xs">
+            <div>
+              <span class="text-slate-400 block text-[10px]">वार्ड नंबर:</span>
+              <span class="font-bold text-slate-800" id="slip-ward">वार्ड नं -</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">क्रमांक (Sr No):</span>
+              <span class="font-bold text-slate-800" id="slip-serial">#0</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">वोटर कार्ड:</span>
+              <span class="font-mono font-bold text-slate-800 text-[11px]" id="slip-epic">-</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">मकान नंबर:</span>
+              <span class="font-bold text-slate-800" id="slip-house">-</span>
+            </div>
+          </div>
+
+          <div class="text-left bg-white border border-slate-200 p-2 rounded-lg text-xs">
+            <span class="text-slate-500 block text-[10px]">मतदान केंद्र:</span>
+            <span class="text-slate-900 font-bold" id="slip-booth">रा.उ.मा.वि. लोरड़ी देजगरा</span>
+          </div>
+
+          <div class="text-[10px] text-slate-500 italic pt-1">
+            "गाँव के विकास एवं खुशहाली हेतु अपना अमूल्य मत देकर विजयी बनाएं!"
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 px-4 py-2.5 border-t border-slate-200 flex items-center justify-between gap-2">
+        <button onclick="closeSlipModal()" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold text-slate-600">
+          बंद करें
+        </button>
+        <button onclick="sendWhatsAppSlip()" class="px-4 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
+          <i data-lucide="send" class="w-3.5 h-3.5"></i>
+          <span>व्हाट्सएप भेजें</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PWA INSTALL GUIDE MODAL -->
+  <div id="pwa-guide-modal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-4 shadow-2xl space-y-3.5 border border-slate-200">
+      <div class="flex items-center gap-3">
+        <img src="/favicon.png" alt="Lordi Daijagra" class="w-12 h-12 rounded-xl object-cover shadow border border-slate-300">
+        <div>
+          <h3 class="font-extrabold text-sm text-slate-900">Lordi Daijagra ऐप इंस्टॉल करें</h3>
+          <p class="text-[11px] text-slate-500 font-medium">होम स्क्रीन पर ऐप की तरह चलाएं</p>
+        </div>
+      </div>
+      
+      <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 space-y-2 text-xs text-slate-700">
+        <div class="flex items-start gap-2">
+          <span class="bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded text-[11px]">Android</span>
+          <p>ऊपर दाईं तरफ <b>तीन बिंदु (⋮)</b> पर टैप करें और <b>"Install app"</b> या <b>"Add to Home screen"</b> चुनें।</p>
+        </div>
+        <div class="flex items-start gap-2 pt-1.5 border-t border-slate-200">
+          <span class="bg-blue-100 text-blue-800 font-bold px-1.5 py-0.5 rounded text-[11px]">iPhone</span>
+          <p>नीचे <b>Share (शेयर <i data-lucide="share" class="w-3 h-3 inline"></i>)</b> पर टैप करें और <b>"Add to Home Screen"</b> दबाएं।</p>
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button onclick="closePwaGuideModal()" class="w-full py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-sm">
+          समझ गया (OK)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-6 right-4 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 border border-slate-700">
+      <i id="toast-icon" data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+      <span id="toast-message">सफलतापूर्वक सुरक्षित!</span>
+    </div>
+  </div>
+
+  <!-- ==================== FIXED BOTTOM NAVIGATION BAR ==================== -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-3 py-1.5 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] flex items-center justify-around max-w-2xl mx-auto">
+    
+    <!-- 1. Families Tab -->
+    <button onclick="switchBottomTab('families')" id="bnav-families" class="flex flex-col items-center justify-center flex-1 py-1 text-emerald-700 font-black transition active:scale-95">
+      <div class="relative flex items-center justify-center">
+        <i data-lucide="home" class="w-5 h-5 mb-0.5"></i>
+        <span class="bnav-dot absolute -top-1 -right-1.5 w-2 h-2 bg-emerald-600 rounded-full"></span>
+      </div>
+      <span class="text-[11px] tracking-tight">परिवार</span>
+    </button>
+
+    <!-- 2. All Voters Tab -->
+    <button onclick="switchBottomTab('voters')" id="bnav-voters" class="flex flex-col items-center justify-center flex-1 py-1 text-slate-500 hover:text-slate-900 font-semibold transition active:scale-95">
+      <div class="relative flex items-center justify-center">
+        <i data-lucide="users" class="w-5 h-5 mb-0.5"></i>
+        <span class="bnav-dot hidden absolute -top-1 -right-1.5 w-2 h-2 bg-emerald-600 rounded-full"></span>
+      </div>
+      <span class="text-[11px] tracking-tight">सभी वोटर</span>
+    </button>
+
+    <!-- 3. Key VIPs Tab -->
+    <button onclick="switchBottomTab('key')" id="bnav-key" class="flex flex-col items-center justify-center flex-1 py-1 text-slate-500 hover:text-slate-900 font-semibold transition active:scale-95">
+      <div class="relative flex items-center justify-center">
+        <i data-lucide="star" class="w-5 h-5 mb-0.5 text-amber-500"></i>
+        <span class="bnav-dot hidden absolute -top-1 -right-1.5 w-2 h-2 bg-emerald-600 rounded-full"></span>
+      </div>
+      <span class="text-[11px] tracking-tight">प्रमुख वोटर</span>
+    </button>
+
+    <!-- 4. Analytics Tab -->
+    <button onclick="switchBottomTab('analytics')" id="bnav-analytics" class="flex flex-col items-center justify-center flex-1 py-1 text-slate-500 hover:text-slate-900 font-semibold transition active:scale-95">
+      <div class="relative flex items-center justify-center">
+        <i data-lucide="pie-chart" class="w-5 h-5 mb-0.5"></i>
+        <span class="bnav-dot hidden absolute -top-1 -right-1.5 w-2 h-2 bg-emerald-600 rounded-full"></span>
+      </div>
+      <span class="text-[11px] tracking-tight">चुनावी गणित</span>
+    </button>
+
+  </nav>
+
+  <!-- JAVASCRIPT -->
+  <script src="/app.js"></script>
+</body>
+</html>

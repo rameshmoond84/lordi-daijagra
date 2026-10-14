@@ -1,0 +1,23 @@
+{
+  "name": "lordi-daijagra",
+  "version": "1.0.0",
+  "description": "Gram Panchayat Lordi Daijagra - Voter Management & Election War Room 2026",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "keywords": [
+    "lordi-daijagra",
+    "panchayat-election",
+    "voter-management",
+    "war-room",
+    "rajasthan",
+    "pwa"
+  ],
+  "author": "Lordi Daijagra Campaign Team",
+  "license": "ISC"
+}
